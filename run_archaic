@@ -9,30 +9,24 @@ set -x
 # Every "dangerous" line should start with $debug,
 # so you can run it in "dry-mode" to test consistency.
 # After feeling courageous enough, uncomment the second next line:
-debug="echo"
-# debug=
+# debug="echo"
+debug=
 
 loadkeys la-latin1
 
 ### Carefully edit these variables: ###
-HOSTNAME=shannon
+HOSTNAME=golondrina
 # Device in which installation will take place:
-DEVICE=/dev/nvme0n1
+DEVICE=/dev/sda
 # Already existing EFI partition (e.g., made by a Windows install):
-EFI=${DEVICE}p1
-# Already existing Windows recovery partition:
-WINREC=${DEVICE}p4
+EFI=${DEVICE}1
 # (to be created) Main Arch Linux LUKS+LVM partition:
-LUKS_LVM=${DEVICE}p5
+LUKS_LVM=${DEVICE}2
 # (to be created) Secondary (non-encrypted) Arch Linux partition:
-SEC_ARCH=${DEVICE}p6
-BKP_SCP_OUTSIDE_DEST=some_user@some_host:/tmp
+SEC_ARCH=${DEVICE}3
 ###
 
-ls $DEVICE $EFI $WINREC || { echo "Required partitions missing. Aborting."; exit 1; }
-
 # Ideally, you should not need to edit this variables:
-BKP_DEST=/tmp/bkps
 # LVM Volume Group name:
 VG_NAME=vg${HOSTNAME}
 # Installation date, for naming backups:
@@ -49,47 +43,25 @@ trap "exit 1" INT
 # Stop script if any command fails:
 set -e
 
-# Backups dir:
-$debug mkdir -p $BKP_DEST
-
-# Backup GPT table, before any change is made:
-$debug sgdisk --backup="$BKP_DEST/${TODAY}-${HOSTNAME}_gpt.bkp" $DEVICE
-
-# Backup EFI raw partition:
-$debug bash -c "dd if=$EFI | gzip > $BKP_DEST/${TODAY}-${HOSTNAME}_efi_partition.img.gz"
-# Backup EFI partition files:
-$debug mount $EFI /mnt
-$debug tar cfz "$BKP_DEST/${TODAY}-${HOSTNAME}_efi_partition_files.tar.gz" /mnt
-$debug umount /mnt
-
-# Windows recovery partition files:
-$debug mount $WINREC /mnt
-$debug tar cfz "$BKP_DEST/${TODAY}-${HOSTNAME}_winrec_partition_files.tar.gz" /mnt
-$debug umount /mnt
-
 ### Interactive partition creation ###
 # TODO: automate this:
 PARTITIONS_READY=no
 while [ $PARTITIONS_READY = "no" ]
 do
-    # Create one for LUKS+LVM ("Linux LVM" type) and one for SEC_ARCH ("Linux")
     $debug cfdisk $DEVICE
     $debug partprobe
     echo "This is the output of fdisk -l $DEVICE:"
     fdisk -l $DEVICE
     echo
+    echo "$EFI must be where EFI will be set."
     echo "$LUKS_LVM must be where LUKS+LVM for Main Arch Linux will be set."
     echo "$SEC_ARCH must be where Secondary Arch Linux will be installed."
     echo
     read -p "Is this correct? [yes/no]: " PARTITIONS_READY
 done
 
-# Backup GPT Table after manual modifications:
-$debug sgdisk --backup="$BKP_DEST/${TODAY}-${HOSTNAME}_gpt_after_manual_modifications.bkp" $DEVICE
-
-# Send backups to the outside:
-echo "Sending backups through scp to $BKP_SCP_OUTSIDE_DEST"
-$debug scp -r $BKP_DEST $BKP_SCP_OUTSIDE_DEST
+# Format efi partition
+$debug mkfs.fat -F 32 $EFI
 
 # Sets LUKS:
 $debug cryptsetup luksFormat --type luks2 $LUKS_LVM
@@ -101,15 +73,17 @@ $debug vgcreate $VG_NAME /dev/mapper/cryptlvm
 
 # Create main Arch Linux Logical Volumes:
 $debug lvcreate -L  2GiB $VG_NAME -n root
-$debug lvcreate -L 15GiB $VG_NAME -n usr
-$debug lvcreate -L 15GiB $VG_NAME -n var
-$debug lvcreate -L 20GiB $VG_NAME -n home
+$debug lvcreate -L 30GiB $VG_NAME -n usr
+$debug lvcreate -L 50GiB $VG_NAME -n var
+$debug lvcreate -L 150GiB $VG_NAME -n home
+$debug lvcreate -L 50GiB $VG_NAME -n bkp
 
 # Format those volumes:
 $debug mkfs.ext4 /dev/${VG_NAME}/root
 $debug mkfs.ext4 /dev/${VG_NAME}/usr
 $debug mkfs.ext4 /dev/${VG_NAME}/var
 $debug mkfs.ext4 /dev/${VG_NAME}/home
+$debug mkfs.ext4 /dev/${VG_NAME}/bkp
 
 # Prepare mount points for arch-chroot:
 $debug mount /dev/${VG_NAME}/root /mnt
@@ -141,9 +115,7 @@ $debug arch-chroot /mnt /root/$INSIDE_SCRIPT $HOSTNAME linux
 $debug rm /mnt/root/$INSIDE_SCRIPT
 $debug umount -R /mnt
 
-
 ### Secondary Arch ###
-
 $debug mkfs.ext4 $SEC_ARCH
 
 $debug mount $SEC_ARCH /mnt
@@ -163,7 +135,6 @@ $debug cp -r configs /mnt/root/
 # Secondary Arch hostname will be 'vaultos' for Vault OS.
 $debug arch-chroot /mnt /root/$INSIDE_SCRIPT vaultos linux-lts $debug
 $debug rm /mnt/root/$INSIDE_SCRIPT
-
 
 ### REFIND ###
 $debug arch-chroot /mnt refind-install

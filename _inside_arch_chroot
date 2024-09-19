@@ -210,22 +210,6 @@ $debug cd /etc
 $debug git add /etc/shadow /etc/shadow-
 $debug git commit -m "sets root password"
 
-
-### DOT FILES ###
-DOT_FILES_LOCATION=/etc/archaic_dots
-$debug mkdir -p $DOT_FILES_LOCATION
-$debug cp /root/configs/bash_profile $DOT_FILES_LOCATION/
-$debug cp /root/configs/bashrc       $DOT_FILES_LOCATION/
-$debug cp /root/configs/inputrc      $DOT_FILES_LOCATION/
-
-$debug ln -sf "$DOT_FILES_LOCATION/bash_profile" /root/.bash_profile
-$debug ln -sf "$DOT_FILES_LOCATION/bashrc"       /root/.bashrc
-$debug ln -sf "$DOT_FILES_LOCATION/inputrc"      /root/.inputrc
-
-$debug cd /etc
-$debug git add "$DOT_FILES_LOCATION/*"
-$debug git commit -m 'adds archaic basic dotfiles'
-
 ### DESKTOP ###
 if [[ $HOSTNAME != "vaultos" ]]
 then
@@ -247,18 +231,12 @@ then
         $debug cd /etc
         $debug git commit -a -m 'updates all modified files by pacman' || true
 
-        $debug cp /root/configs/xmonad.hs $DOT_FILES_LOCATION/
-        $debug mkdir -p "/home/$USER_NAME/.xmonad"
-        $debug ln -sf "$DOT_FILES_LOCATION/xmonad.hs" "/home/$USER_NAME/.xmonad/xmonad.hs"
-
         $debug cp /root/configs/Xresources   $DOT_FILES_LOCATION/
         $debug cp /root/configs/xbindkeysrc  $DOT_FILES_LOCATION/
         $debug cp /root/configs/Xmodmap      $DOT_FILES_LOCATION/
         $debug cp /root/configs/xinitrc      $DOT_FILES_LOCATION/
         $debug cp /root/configs/brillo_subir $DOT_FILES_LOCATION/
         $debug cp /root/configs/brillo_bajar $DOT_FILES_LOCATION/
-        $debug cp /root/configs/switch_autorandr $DOT_FILES_LOCATION/
-        $debug cp -r /root/configs/xmobar    $DOT_FILES_LOCATION/
 
         $debug cd /etc
         $debug git add "$DOT_FILES_LOCATION/*"
