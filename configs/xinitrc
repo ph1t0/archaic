@@ -1,38 +1,4 @@
-#!/bin/bash
-
-xrdb -merge -I$HOME /etc/archaic_dots/Xresources
-
-setxkbmap -option terminate:ctrl_alt_bksp
-
+#!/bin/sh
 setxkbmap latam
-
-xsetroot -cursor_name left_ptr
-
-xset r rate 250 30
-
-# Fn
-xbindkeys -f /etc/archaic_dots/xbindkeysrc
-
-# Switch HOME/END <--> PG DOWN/PG UP
-# TODO: shift!
-xmodmap /etc/archaic_dots/Xmodmap
-
-thunar --daemon &
-
-xmobar -x 0 /etc/archaic_dots/xmobar/botbar &
-xmobar -x 1 /etc/archaic_dots/xmobar/botbar &
-
-redshift -l '-34.598:-58.416' &
-
-~/.fehbg &
-
-xscreensaver &
-
-xss-lock -- xscreensaver-command -lock &
-
-/etc/archaic_dots/switch_autorandr &
-
-setterm -blength 0
-xset -b
-
-xmonad || xmonad --recompile && xmonad
+udiskie -at &
+exec i3

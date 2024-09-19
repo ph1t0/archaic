@@ -1,7 +1,0 @@
-#!/bin/sh
-# 2015.09.22
-if [ $(xbacklight -get | awk '{print int($1)}') -gt 5 ]; then 
-	xbacklight -dec 5 && (xbacklight -get; sleep 1) | /usr/bin/xmobar -o -t '}<fc=#ffff00>%StdinReader%</fc>{' -c '[Run StdinReader]';
-else
-	xbacklight -set 1 && (xbacklight -get; sleep 1) | /usr/bin/xmobar -o -t '}<fc=#ffff00>%StdinReader%</fc>{' -c '[Run StdinReader]';
-fi

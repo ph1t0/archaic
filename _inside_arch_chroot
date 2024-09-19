@@ -46,7 +46,6 @@ $debug etckeeper init
 $debug git config user.name $GIT_COMMITTER_NAME
 $debug git config user.email $GIT_COMMITTER_EMAIL
 
-
 $debug cd /etc
 $debug git rm --cached --ignore-unmatch /etc/.updated
 $debug git rm --cached --ignore-unmatch /etc/resolv.conf
@@ -71,7 +70,6 @@ $debug cd /etc
 $debug git add /etc/systemd/system/sysinit.target.wants/systemd-timesyncd.service "$ETC_LOCALTIME"
 $debug git commit -m 'sets timezone and ntp=True'
 
-
 ### LOCALE and KEYMAP
 $debug sed -i '$ a\en_US.UTF-8 UTF-8' $LOCALE_GEN
 $debug sed -i '$ a\es_AR.UTF-8 UTF-8' $LOCALE_GEN
@@ -84,7 +82,6 @@ $debug bash -c "echo FONT=Lat2-Terminus16 >> $VCONSOLE_CONF "
 $debug cd /etc
 $debug git add "$LOCALE_GEN" "$LOCALE_CONF" "$VCONSOLE_CONF"
 $debug git commit -m 'sets locale, keymap and vconsole font'
-
 
 ### RENAMING Network interfaces ###
 WIRELESS_MAC=$(iw dev | grep addr | tail -n 1 | awk '{print $2}')
@@ -101,7 +98,6 @@ $debug cd /etc
 $debug git add "$UDEV_NW_RULE"
 $debug git commit -m 'adds udev rule for changing network interfaces names'
 
-
 ### DHCP Client Daemon ###
 # This will save ~5 seconds:
 $debug sed -i '$ a\noarp' /etc/dhcpcd.conf
@@ -113,7 +109,6 @@ $debug cp /root/configs/dhcpcd-no-wait.conf /etc/systemd/system/dhcpcd@.service.
 $debug cd /etc
 $debug git add /etc/dhcpcd.conf /etc/systemd/system/multi-user.target.wants/dhcpcd@cable.service /etc/systemd/system/dhcpcd@.service.d/dhcpcd-no-wait.conf
 $debug git commit -m 'adds dhcpcd@cable systemd unit'
-
 
 ### Enable SSH Server ###
 $debug ln -sf /usr/lib/systemd/system/sshd.service /etc/systemd/system/multi-user.target.wants/sshd.service
@@ -136,7 +131,6 @@ $debug git add "$ETC_MKINITCPIO"
 $debug git commit -m 'modifies mkinitcpio.conf HOOKS to suit systemd, LVM+LUKS and vconsole'
 $debug mkinitcpio -p "$KERNEL"
 
-
 ### AVAHI ###
 NSS_HOSTS='files mymachines myhostname mdns4_minimal [NOTFOUND=return] resolve [!UNAVAIL=return] dns'
 $debug mkdir -p /etc/systemd/system/sockets.target.wants
@@ -148,7 +142,6 @@ $debug cd /etc
 $debug git add /etc/nsswitch.conf /etc/systemd/system/sockets.target.wants/avahi-daemon.socket /etc/systemd/system/multi-user.target.wants/avahi-daemon.service /etc/systemd/system/dbus-org.freedesktop.Avahi.service
 $debug git commit -m 'configs and enables avahi'
 
-
 ### PACMAN OPTIONS ###
 $debug sed 's/^#\(UseSyslog.*\)/\1/'       -i "$PACMAN_CONF"
 $debug sed 's/^#\(Color.*\)/\1/'           -i "$PACMAN_CONF"
@@ -157,13 +150,11 @@ $debug cd /etc
 $debug git add "$PACMAN_CONF"
 $debug git commit -m 'enhances pacman.conf'
 
-
 ### LID SWITCH BEHAVIOUR ###
 $debug sed -i '$ a\HandleLidSwitch=lock' /etc/systemd/logind.conf
 $debug cd /etc
 $debug git add /etc/systemd/logind.conf
 $debug git commit -m 'sets LidSwitch to lock'
-
 
 ### POWER BUTTON BEHAVIOUR ###
 $debug sed -i '$ a\HandlePowerKey=suspend' /etc/systemd/logind.conf
@@ -171,13 +162,11 @@ $debug cd /etc
 $debug git add /etc/systemd/logind.conf
 $debug git commit -m 'sets PowerKey to suspend'
 
-
 ### PERSISTENT JOURNAL  ###
 $debug sed -i '$ a\Storage=persistent' /etc/systemd/journald.conf
 $debug cd /etc
 $debug git add /etc/systemd/journald.conf
 $debug git commit -m 'makes journal persistent'
-
 
 ### BLUETOOTH ###
 $debug sed 's/^#AutoEnable=false$/AutoEnable=true/' -i /etc/bluetooth/main.conf
@@ -223,24 +212,9 @@ then
         $debug git add group{,-} gshadow{,-} passwd{,-} shadow{,-} /etc/sudoers subuid{,-} subgid{,-}
         $debug git commit -m "creates user $USER_NAME"
 
-        $debug ln -sf "$DOT_FILES_LOCATION/bash_profile" "/home/$USER_NAME/.bash_profile"
-        $debug ln -sf "$DOT_FILES_LOCATION/bashrc"       "/home/$USER_NAME/.bashrc"
-        $debug ln -sf "$DOT_FILES_LOCATION/inputrc"      "/home/$USER_NAME/.inputrc"
-
         $debug bash -c "cat /root/xorg_pkgs | xargs pacman --noconfirm -S"
         $debug cd /etc
         $debug git commit -a -m 'updates all modified files by pacman' || true
-
-        $debug cp /root/configs/Xresources   $DOT_FILES_LOCATION/
-        $debug cp /root/configs/xbindkeysrc  $DOT_FILES_LOCATION/
-        $debug cp /root/configs/Xmodmap      $DOT_FILES_LOCATION/
-        $debug cp /root/configs/xinitrc      $DOT_FILES_LOCATION/
-        $debug cp /root/configs/brillo_subir $DOT_FILES_LOCATION/
-        $debug cp /root/configs/brillo_bajar $DOT_FILES_LOCATION/
-
-        $debug cd /etc
-        $debug git add "$DOT_FILES_LOCATION/*"
-        $debug git commit -m 'adds xorg archaic dotfiles'
 
         ### TOUCHPAD TAPPING
         $debug cp /root/configs/40-libinput.conf /etc/X11/xorg.conf.d/
@@ -254,7 +228,7 @@ then
         $debug git add /etc/pulse/default.pa
         $debug git commit -m 'makes pulseaudio autoconnect headset'
 
-        $debug ln -sf "$DOT_FILES_LOCATION/xinitrc" "/home/$USER_NAME/.xinitrc"
+        $debug cp /root/configs/xinitrc "/home/$USER_NAME/.xinitrc"
         $debug chown -R "$USER_NAME:$USER_NAME" "/home/$USER_NAME"
 fi
 
