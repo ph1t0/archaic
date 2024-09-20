@@ -18,8 +18,9 @@ loadkeys la-latin1
 HOSTNAME=golondrina
 # Device in which installation will take place:
 DEVICE=/dev/sda
-# Already existing EFI partition (e.g., made by a Windows install):
+# (to be created) EFI partition 
 EFI=${DEVICE}1
+EFI_GRUB="hd0,gpt1"
 # (to be created) Main Arch Linux LUKS+LVM partition:
 LUKS_LVM=${DEVICE}2
 # (to be created) Secondary (non-encrypted) Arch Linux partition:
@@ -136,28 +137,23 @@ $debug cp -r configs /mnt/root/
 $debug arch-chroot /mnt /root/$INSIDE_SCRIPT vaultos linux-lts $debug
 $debug rm /mnt/root/$INSIDE_SCRIPT
 
-### REFIND ###
-$debug arch-chroot /mnt refind-install
-REFIND_CONF=/mnt/boot/EFI/refind/refind.conf
-$debug sed 's/^\(timeout.*\)/timeout 3/' -i "$REFIND_CONF"
-$debug sed '$ a\resolution 1920 1080'    -i "$REFIND_CONF"
+### GRUB ###
+$debug arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB --removable
 
-$debug rm /mnt/boot/refind_linux.conf
+$debug cp -r configs/arch /mnt/boot/grub/themes 
 
 LUKS_LVM_UUID=$(blkid -o export $LUKS_LVM | awk '/^UUID/' | cut -d= -f2)
 SEC_ARCH_UUID=$(blkid -o export $SEC_ARCH | awk '/^UUID/' | cut -d= -f2)
 BOOT_UUID=$(blkid -o export $EFI | awk '/^UUID/' | cut -d= -f2)
 
-TMP_STANZA=/tmp/refind_stanza
+GRUB_CFG=/mnt/boot/grub/grub.cfg
+$debug cp configs/grub.cfg $GRUB_CFG
 
-$debug cp refind_stanza "$TMP_STANZA"
-
-$debug sed "/.*WC_BOOT_UUID.*/ s/WC_BOOT_UUID/$BOOT_UUID/g"             -i "$TMP_STANZA"
-$debug sed "/.*WC_LUKS_LVM_UUID.*/ s/WC_LUKS_LVM_UUID/$LUKS_LVM_UUID/g" -i "$TMP_STANZA"
-$debug sed "/.*WC_VG_NAME.*/ s/WC_VG_NAME/$VG_NAME/g"                   -i "$TMP_STANZA"
-$debug sed "/.*WC_SEC_ARCH_UUID.*/ s/WC_SEC_ARCH_UUID/$SEC_ARCH_UUID/g" -i "$TMP_STANZA"
-
-$debug bash -c "cat $TMP_STANZA >> $REFIND_CONF "
+$debug sed "/.*WC_EFI_GRUB.*/ s/WC_EFI_GRUB/$EFI_GRUB/g"                -i "$GRUB_CFG"
+$debug sed "/.*WC_BOOT_UUID.*/ s/WC_BOOT_UUID/$BOOT_UUID/g"             -i "$GRUB_CFG"
+$debug sed "/.*WC_LUKS_LVM_UUID.*/ s/WC_LUKS_LVM_UUID/$LUKS_LVM_UUID/g" -i "$GRUB_CFG"
+$debug sed "/.*WC_VG_NAME.*/ s/WC_VG_NAME/$VG_NAME/g"              -i "$GRUB_CFG"
+$debug sed "/.*WC_SEC_ARCH_UUID.*/ s/WC_SEC_ARCH_UUID/$SEC_ARCH_UUID/g" -i "$GRUB_CFG"
 
 $debug umount -R /mnt
 
