@@ -138,6 +138,7 @@ $debug arch-chroot /mnt /root/$INSIDE_SCRIPT vaultos linux-lts $debug
 $debug rm /mnt/root/$INSIDE_SCRIPT
 
 ### GRUB ###
+$debug arch-chroot /mnt pacman --noconfirm -S grub
 $debug arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB --removable
 
 $debug cp -r configs/arch /mnt/boot/grub/themes 
@@ -152,7 +153,7 @@ $debug cp configs/grub.cfg $GRUB_CFG
 $debug sed "/.*WC_EFI_GRUB.*/ s/WC_EFI_GRUB/$EFI_GRUB/g"                -i "$GRUB_CFG"
 $debug sed "/.*WC_BOOT_UUID.*/ s/WC_BOOT_UUID/$BOOT_UUID/g"             -i "$GRUB_CFG"
 $debug sed "/.*WC_LUKS_LVM_UUID.*/ s/WC_LUKS_LVM_UUID/$LUKS_LVM_UUID/g" -i "$GRUB_CFG"
-$debug sed "/.*WC_VG_NAME.*/ s/WC_VG_NAME/$VG_NAME/g"              -i "$GRUB_CFG"
+$debug sed "/.*WC_VG_NAME.*/ s/WC_VG_NAME/$VG_NAME/g"                   -i "$GRUB_CFG"
 $debug sed "/.*WC_SEC_ARCH_UUID.*/ s/WC_SEC_ARCH_UUID/$SEC_ARCH_UUID/g" -i "$GRUB_CFG"
 
 $debug umount -R /mnt
