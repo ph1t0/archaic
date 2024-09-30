@@ -230,6 +230,12 @@ then
 
         $debug cp /root/configs/xinitrc "/home/$USER_NAME/.xinitrc"
         $debug chown -R "$USER_NAME:$USER_NAME" "/home/$USER_NAME"
+
+        # Personal
+        # sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+        # yay
+        # keybase-bin
+        # zulip desktop
 fi
 
 $debug cd /etc
